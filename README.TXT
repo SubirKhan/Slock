@@ -15,7 +15,9 @@ Data Types:
 Special Variables:
 - one use case for constant variable will be having 5 max users.
 - one use case for static variable will be guest IDs?
-
+- one use case for reference variable is will be to reference a constant variable, they can reference 5 users and return T/F?
+- one use case for array or vector will be Guests
+- one use case for struct or enum will be to take Phone#, Email, and Bank Account for Guests?
 
 
 
