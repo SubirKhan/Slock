@@ -19,5 +19,8 @@ Special Variables:
 - one use case for array or vector will be Guests
 - one use case for struct or enum will be to take Phone#, Email, and Bank Account for Guests?
 
+Log-in:
+- string will be used for passcodes.Any length, any string.
+
 
 

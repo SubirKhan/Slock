@@ -1,20 +1,22 @@
 #include <iostream>
 #include <string>
+using namespace std;
+
 
 class User {
 public:
 
 private: 
 
-string name;
-int user_ID;
-string passnode;
-int attempts_used;
-bool active_inactive;
-string phone_num;
-string email;
+    string name;
+    int attempts_used;
+    bool active_inactive;
+    string phone_num;
+    string email;
 
-
+public:
+    int user_ID;
+    string passcode;
 };
 
  
