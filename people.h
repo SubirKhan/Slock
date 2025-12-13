@@ -1,32 +1,24 @@
-#include <iostream>
+#ifndef PEOPLE_H
+#define PEOPLE_H
+
 #include <string>
 using namespace std;
 
-
+ // parent class
 class User {
 public:
-
-private: 
-
-    string name;
-    int attempts_used;
-    bool active_inactive;
-    string phone_num;
-    string email;
-
-public:
-    int user_ID;
-    string passcode;
+    int user_ID;        // ID for the user 
+    string passcode;    // passcode
 };
 
- 
-class Landlord : public User { // Landlord class is inherting from USer (parent) 
-
+// Landlord (Admin) class , inheritance from user parent class
+class Landlord : public User {
+   
 };
 
-
-class Guest : public User {  // Guest class is inherting from USer (parent)
-
-
+// Guest class, inherits from user parent class
+class Guest : public User {
+    
 };
 
+#endif
