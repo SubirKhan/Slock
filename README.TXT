@@ -22,5 +22,17 @@ Special Variables:
 Log-in:
 - string will be used for passcodes.Any length, any string.
 
+Current Updates:
+- login system with username and passcode
+- admin menu for landlords to manage the system
+- guest users get welcome message when they enter correctly
+- list all users function for admin
+- door unlock simulation
+
+Special Features:
+- after 5 failed attempts, users get charged $0.50 per attempt
+- after 10 failed attempts, penalty uses modular arithmetic based on username length
+- random passcode generator creates mix of letters and numbers with max character count of 6.
+
 
 
