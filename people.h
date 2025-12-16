@@ -4,21 +4,38 @@
 #include <string>
 using namespace std;
 
- // parent class
-class User {
+// struct for login
+struct LoginInfo {
+    string username;
+    string passcode;
+};
+
+
+class User { // parent class
 public:
-    int user_ID;        // ID for the user 
-    string passcode;    // passcode
-};
-
-// Landlord (Admin) class , inheritance from user parent class
-class Landlord : public User {
-   
-};
-
-// Guest class, inherits from user parent class
-class Guest : public User {
+    string username;     
+    string passcode;    
+    int failedAttempts;  // to track failed attempts
+    static int totalAttempts;  // static requirement
     
+    User() {
+        failedAttempts = 0;
+    }
+};
+
+
+int User::totalAttempts = 0; // static variable
+
+
+class Landlord : public User { // landlord, which is the ADMIN, class
+public:
+    bool isAdmin = true;
+};
+
+
+class Guest : public User { // guest class
+public:
+    bool isAdmin = false;
 };
 
 #endif
