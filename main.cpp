@@ -5,6 +5,8 @@
 
 using namespace std;
 
+const int MAX_USERS = 5;  // max users allowed
+
 int main() {
     
     vector<User> users; // vector that stores users
@@ -27,7 +29,7 @@ int main() {
     users.push_back(user2);
     
     
-    cout << "Welcome to SLock!" << endl; // welcome message!
+    cout << "Welcome to SLock!" << endl; // welcome message
     
     bool running = true;
     
@@ -44,15 +46,15 @@ int main() {
             cout << "Goodbye!" << endl;
         }
         else if (choice == 1) {
-            // user enters username and passcode
-            string input_username, input_passcode;
+            
+            string input_username, input_passcode; // user enters username and passcode
             cout << "Enter username: ";
             cin >> input_username;
             cout << "Enter passcode: ";
             cin >> input_passcode;
             
-            // check if user exists
-            bool found = false;
+            
+            bool found = false; // check if user exists
             bool isAdmin = false;
             
             for (int i = 0; i < users.size(); i++) {
@@ -80,7 +82,8 @@ int main() {
                         cout << "2. Add user" << endl;
                         cout << "3. Delete user" << endl;
                         cout << "4. List all users" << endl;
-                        cout << "5. Logout" << endl;
+                        cout << "5. Change user passcode" << endl;
+                        cout << "6. Logout" << endl;
                         cout << "Choice: ";
                         
                         int adminChoice;
@@ -88,6 +91,57 @@ int main() {
                         
                         if (adminChoice == 1) {
                             cout << "DOOR UNLOCKED!" << endl;
+                        }
+                        else if (adminChoice == 2) {
+                            // add new user
+                            if (users.size() >= MAX_USERS) {
+                                cout << "Maximum users reached (" << MAX_USERS << ")" << endl;
+                            }
+                            else {
+                                User newUser;
+                                cout << "Enter new username: ";
+                                cin >> newUser.username;
+                                
+                                // check if username already exists
+                                bool exists = false;
+                                for (int i = 0; i < users.size(); i++) {
+                                    if (users[i].username == newUser.username) {
+                                        exists = true;
+                                        break;
+                                    }
+                                }
+                                
+                                if (exists) {
+                                    cout << "Username already exists!" << endl;
+                                }
+                                else {
+                                    cout << "Enter passcode for new user: ";
+                                    cin >> newUser.passcode;
+                                    users.push_back(newUser);
+                                    cout << "User added successfully!" << endl;
+                                }
+                            }
+                        }
+                        else if (adminChoice == 3) {
+                            // delete user
+                            cout << "\nSelect user to delete:" << endl;
+                            for (int i = 0; i < users.size(); i++) {
+                                cout << i+1 << ". " << users[i].username << endl;
+                            }
+                            cout << "Enter number: ";
+                            int deleteChoice;
+                            cin >> deleteChoice;
+                            
+                            if (deleteChoice == 1) {
+                                cout << "Cannot delete admin!" << endl;
+                            }
+                            else if (deleteChoice > 0 && deleteChoice <= users.size()) {
+                                users.erase(users.begin() + deleteChoice - 1);
+                                cout << "User deleted!" << endl;
+                            }
+                            else {
+                                cout << "Invalid choice!" << endl;
+                            }
                         }
                         else if (adminChoice == 4) {
                             // list users
@@ -97,6 +151,27 @@ int main() {
                             }
                         }
                         else if (adminChoice == 5) {
+                            // change user passcode
+                            cout << "\nSelect user to change passcode:" << endl;
+                            for (int i = 0; i < users.size(); i++) {
+                                cout << i+1 << ". " << users[i].username << endl;
+                            }
+                            cout << "Enter number: ";
+                            int changeChoice;
+                            cin >> changeChoice;
+                            
+                            if (changeChoice > 0 && changeChoice <= users.size()) {
+                                cout << "Enter new passcode: ";
+                                string newPass;
+                                cin >> newPass;
+                                users[changeChoice - 1].passcode = newPass;
+                                cout << "Passcode changed!" << endl;
+                            }
+                            else {
+                                cout << "Invalid choice!" << endl;
+                            }
+                        }
+                        else if (adminChoice == 6) {
                             adminMenu = false;
                             cout << "Logged out." << endl;
                         }
@@ -107,7 +182,7 @@ int main() {
                 }
             }
             else {
-                cout << "ACCESS DENIED" << endl;
+                cout << "GTFO" << endl;
                 User::totalAttempts++;  // increment static counter
             }
         }
