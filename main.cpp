@@ -10,6 +10,11 @@ using namespace std;
 
 const int MAX_USERS = 5;  // max users allowed
 
+// enum for user types
+enum UserType {
+    GUEST_USER,
+    ADMIN_USER
+};
 
 string generateRandomPasscode() { // function to generate random passcode
     
@@ -29,18 +34,18 @@ string generateRandomPasscode() { // function to generate random passcode
 }
 
 // function to calculate penalty using reference
-void calculatePenalty(int &attempts, double &penalty) {
+void calculatePenalty(int &attempts, double &penalty, string username) {  // added username parameter
     if (attempts > 5 && attempts <= 10) {
         // charge 50 cents per attempt after 5th
         int extraAttempts = attempts - 5;
         penalty = extraAttempts * 0.50;
     }
     else if (attempts > 10) {
-        // modular penalty
+        // better modular calculation using username length
         penalty = 2.50;  // base penalty for attempts 6-10
         
-        // add modular calculation
-        int remainder = attempts % 5;
+        int nameLength = username.length();
+        int remainder = (nameLength + attempts) % 5;
         penalty = penalty + (remainder * 2.0);
     }
 }
@@ -63,7 +68,6 @@ void saveUsersToFile(vector<User> &users) {
         cout << "Error saving file!" << endl;
     }
 }
-
 
 void loadUsersFromFile(vector<User> &users) { // function to load users from file
     ifstream file;
@@ -96,17 +100,16 @@ int main() {
     srand(time(0));  // random number generator
     
     vector<User> users; // vector that stores users
-    
+    float sessionTime = 0.0;  // float to track time in system
     
     loadUsersFromFile(users); // load users from file if it exists
     
-        if (users.size() == 0) { // if no users loaded we will create defaults
+    if (users.size() == 0) { // if no users loaded we will create defaults
 
         User admin; // default admin
         admin.username = "admin"; // making username for admin
         admin.passcode = "test19"; // making passcode for admin
         users.push_back(admin);
-        
         
         User user1; // sample user 1
         user1.username = "john"; // making username for guest 1
@@ -118,7 +121,6 @@ int main() {
         user2.passcode = "hello"; // making passcode for guest 2
         users.push_back(user2);
     }
-    
     
     cout << "Welcome to SLock!" << endl; // welcome message
     
@@ -133,11 +135,11 @@ int main() {
         cin >> choice;
 
         if (cin.fail()) {
-    cin.clear();  // clears the error of invalid entry at log in menu
-    cin.ignore(1000, '\n');  // ignore bad input
-    cout << "Invalid input! Please enter 1 or 2." << endl;
-    continue;  // go back to start of loop
-}
+            cin.clear();  // clears the error of invalid entry at log in menu
+            cin.ignore(1000, '\n');  // ignore bad input
+            cout << "Invalid input! Please enter 1 or 2." << endl;
+            continue;  // go back to start of loop
+        }
         
         if (choice == 2) {
             running = false;
@@ -154,7 +156,7 @@ int main() {
             
             // check if user exists
             bool found = false;
-            bool isAdmin = false;
+            UserType userType = GUEST_USER; 
             int userIndex = -1;  // track which user for failed attempts
             
             for (int i = 0; i < users.size(); i++) {
@@ -166,7 +168,17 @@ int main() {
                         
                         // check if its the admin
                         if (input_username == "admin") {
-                            isAdmin = true;
+                            userType = ADMIN_USER;  // using enum
+                            
+                            // force password change if using default
+                            if (users[i].passcode == "test19") {
+                                cout << "You are using the default password!" << endl;
+                                cout << "Please change your password: ";
+                                string newAdminPass;
+                                cin >> newAdminPass;
+                                users[i].passcode = newAdminPass;
+                                cout << "Password changed successfully!" << endl;
+                            }
                         }
                         break;
                     }
@@ -174,9 +186,10 @@ int main() {
             }
             
             if (found == true) {
-                if (isAdmin == true) {
+                float loginTime = time(NULL);  // track login time using float
+                
+                if (userType == ADMIN_USER) {  // using enum instead of bool
                     cout << "Welcome Admin!" << endl;
-                    
                     
                     bool adminMenu = true; // admin menu
                     while (adminMenu) {
@@ -192,108 +205,122 @@ int main() {
                         int adminChoice;
                         cin >> adminChoice;
                         
-                        if (adminChoice == 1) {
-                            cout << "DOOR UNLOCKED!" << endl;
-                        }
-                        else if (adminChoice == 2) {
-                            // add new user
-                            if (users.size() >= MAX_USERS) {
-                                cout << "Maximum users reached (" << MAX_USERS << ")" << endl;
-                            }
-                            else {
-                                User newUser;
-                                cout << "Enter new username: ";
-                                cin >> newUser.username;
+                        // using switch statement instead of if/else
+                        switch(adminChoice) {
+                            case 1:
+                                cout << "DOOR UNLOCKED!" << endl;
+                                break;
                                 
-                                // check if username already exists
-                                bool exists = false;
-                                for (int i = 0; i < users.size(); i++) {
-                                    if (users[i].username == newUser.username) {
-                                        exists = true;
-                                        break;
-                                    }
-                                }
-                                
-                                if (exists) {
-                                    cout << "Username already exists!" << endl;
+                            case 2:
+                                // add new user
+                                if (users.size() >= MAX_USERS) {
+                                    cout << "Maximum users reached (" << MAX_USERS << ")" << endl;
                                 }
                                 else {
-                                    // ask if they want random passcode
-                                    cout << "Generate random passcode? (y/n): ";
-                                    char randomChoice;
-                                    cin >> randomChoice;
-                                    cin.ignore(); // prevents terminal from endlessly crashing
+                                    User newUser;
+                                    cout << "Enter new username: ";
+                                    cin >> newUser.username;
                                     
-                                    if (randomChoice == 'y' || randomChoice == 'Y') {
-                                        newUser.passcode = generateRandomPasscode();
-                                        cout << "Generated passcode: " << newUser.passcode << endl;
+                                    // check if username already exists
+                                    bool exists = false;
+                                    for (int i = 0; i < users.size(); i++) {
+                                        if (users[i].username == newUser.username) {
+                                            exists = true;
+                                            break;
+                                        }
+                                    }
+                                    
+                                    if (exists) {
+                                        cout << "Username already exists!" << endl;
                                     }
                                     else {
-                                        cout << "Enter passcode for new user: ";
-                                        cin >> newUser.passcode;
+                                        
+                                        cout << "Generate random passcode? (y/n): "; // ask if they want random passcode
+                                        char randomChoice;
+                                        cin >> randomChoice;
+                                        cin.ignore(); // prevents terminal from endlessly crashing
+                                        
+                                        if (randomChoice == 'y' || randomChoice == 'Y') {
+                                            newUser.passcode = generateRandomPasscode();
+                                            cout << "Generated passcode: " << newUser.passcode << endl;
+                                        }
+                                        else {
+                                            cout << "Enter passcode for new user: ";
+                                            cin >> newUser.passcode;
+                                        }
+                                        
+                                        users.push_back(newUser);
+                                        cout << "User added successfully!" << endl;
                                     }
-                                    
-                                    users.push_back(newUser);
-                                    cout << "User added successfully!" << endl;
                                 }
-                            }
-                        }
-                        else if (adminChoice == 3) {
-                            // delete user
-                            cout << "\nSelect user to delete:" << endl;
-                            for (int i = 0; i < users.size(); i++) {
-                                cout << i+1 << ". " << users[i].username << endl;
-                            }
-                            cout << "Enter number: ";
-                            int deleteChoice;
-                            cin >> deleteChoice;
-                            
-                            if (deleteChoice == 1) {
-                                cout << "Cannot delete admin!" << endl;
-                            }
-                            else if (deleteChoice > 0 && deleteChoice <= users.size()) {
-                                users.erase(users.begin() + deleteChoice - 1);
-                                cout << "User deleted!" << endl;
-                            }
-                            else {
-                                cout << "Invalid choice!" << endl;
-                            }
-                        }
-                        else if (adminChoice == 4) {
-                            // list users
-                            cout << "\nAll users:" << endl;
-                            for (int i = 0; i < users.size(); i++) {
-                                cout << i+1 << ". " << users[i].username;
-                                if (users[i].failedAttempts > 0) {
-                                    cout << " (Failed attempts: " << users[i].failedAttempts << ")";
+                                break;
+                                
+                            case 3:
+                                
+                                cout << "\nSelect user to delete:" << endl; // delete user
+                                for (int i = 0; i < users.size(); i++) {
+                                    cout << i+1 << ". " << users[i].username << endl;
                                 }
-                                cout << endl;
-                            }
-                        }
-                        else if (adminChoice == 5) {
-                            // change user passcode
-                            cout << "\nSelect user to change passcode:" << endl;
-                            for (int i = 0; i < users.size(); i++) {
-                                cout << i+1 << ". " << users[i].username << endl;
-                            }
-                            cout << "Enter number: ";
-                            int changeChoice;
-                            cin >> changeChoice;
-                            
-                            if (changeChoice > 0 && changeChoice <= users.size()) {
-                                cout << "Enter new passcode: ";
-                                string newPass;
-                                cin >> newPass;
-                                users[changeChoice - 1].passcode = newPass;
-                                cout << "Passcode changed!" << endl;
-                            }
-                            else {
+                                cout << "Enter number: ";
+                                int deleteChoice;
+                                cin >> deleteChoice;
+                                
+                                if (deleteChoice == 1) {
+                                    cout << "Cannot delete admin!" << endl;
+                                }
+                                else if (deleteChoice > 0 && deleteChoice <= users.size()) {
+                                    users.erase(users.begin() + deleteChoice - 1);
+                                    cout << "User deleted!" << endl;
+                                }
+                                else {
+                                    cout << "Invalid choice!" << endl;
+                                }
+                                break;
+                                
+                            case 4:
+                                
+                                cout << "\nAll users:" << endl; // list users
+                                for (int i = 0; i < users.size(); i++) {
+                                    cout << i+1 << ". " << users[i].username;
+                                    if (users[i].failedAttempts > 0) {
+                                        cout << " (Failed attempts: " << users[i].failedAttempts << ")";
+                                    }
+                                    cout << endl;
+                                }
+                                break;
+                                
+                            case 5:
+                                
+                                cout << "\nSelect user to change passcode:" << endl; // change user passcode
+                                for (int i = 0; i < users.size(); i++) {
+                                    cout << i+1 << ". " << users[i].username << endl;
+                                }
+                                cout << "Enter number: ";
+                                int changeChoice;
+                                cin >> changeChoice;
+                                
+                                if (changeChoice > 0 && changeChoice <= users.size()) {
+                                    cout << "Enter new passcode: ";
+                                    string newPass;
+                                    cin >> newPass;
+                                    users[changeChoice - 1].passcode = newPass;
+                                    cout << "Passcode changed!" << endl;
+                                }
+                                else {
+                                    cout << "Invalid choice!" << endl;
+                                }
+                                break;
+                                
+                            case 6:
+                                adminMenu = false;
+                                sessionTime = (time(NULL) - loginTime) / 60.0;  // calculate session time
+                                cout << "Session lasted: " << sessionTime << " minutes" << endl;
+                                cout << "Logged out." << endl;
+                                break;
+                                
+                            default:
                                 cout << "Invalid choice!" << endl;
-                            }
-                        }
-                        else if (adminChoice == 6) {
-                            adminMenu = false;
-                            cout << "Logged out." << endl;
+                                break;
                         }
                     }
                 }
@@ -305,14 +332,14 @@ int main() {
                 cout << "ACCESS DENIED" << endl;
                 User::totalAttempts++;  // increment static counter
                 
-                // if we find the username but wrong password
-                if (userIndex != -1) {
+                
+                if (userIndex != -1) { // if we find the username but wrong password
                     users[userIndex].failedAttempts++;
                     
-                    // check if penalty applies
-                    if (users[userIndex].failedAttempts > 5) {
+                    
+                    if (users[userIndex].failedAttempts > 5) { // check if penalty applies
                         double penalty = 0.0;
-                        calculatePenalty(users[userIndex].failedAttempts, penalty);
+                        calculatePenalty(users[userIndex].failedAttempts, penalty, users[userIndex].username);  // NEW: pass username
                         cout << "Warning: You have " << users[userIndex].failedAttempts << " failed attempts!" << endl;
                         cout << "Penalty owed: $" << penalty << endl;
                     }
