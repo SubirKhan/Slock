@@ -1,13 +1,52 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <cstdlib>  // for rand
+#include <ctime>    // for time
 #include "people.h"
 
 using namespace std;
 
 const int MAX_USERS = 5;  // max users allowed
 
+// function to generate random passcode
+string generateRandomPasscode() {
+    
+    char letters[] = {'a','b','c','d','e','f','g','h','i','j','k','l','m', // array of characters to use
+                      'n','o','p','q','r','s','t','u','v','w','x','y','z',
+                      '0','1','2','3','4','5','6','7','8','9'};
+    
+    string passcode = "";
+    
+    // generate 6 random characters
+    for (int i = 0; i < 6; i++) {
+        int randomIndex = rand() % 36;  // 26 letters + 10 numbers = 36
+        passcode = passcode + letters[randomIndex];
+    }
+    
+    return passcode;
+}
+
+// function to calculate penalty using reference
+void calculatePenalty(int &attempts, double &penalty) {
+    if (attempts > 5 && attempts <= 10) {
+        // charge 50 cents per attempt after 5th
+        int extraAttempts = attempts - 5;
+        penalty = extraAttempts * 0.50;
+    }
+    else if (attempts > 10) {
+        // modular penalty
+        penalty = 2.50;  // base penalty for attempts 6-10
+        
+        // add modular calculation
+        int remainder = attempts % 5;
+        penalty = penalty + (remainder * 2.0);
+    }
+}
+
 int main() {
+    
+    srand(time(0));  // random number generator
     
     vector<User> users; // vector that stores users
     
@@ -46,27 +85,31 @@ int main() {
             cout << "Goodbye!" << endl;
         }
         else if (choice == 1) {
-            
-            string input_username, input_passcode; // user enters username and passcode
+            // user enters username and passcode
+            string input_username, input_passcode;
             cout << "Enter username: ";
             cin >> input_username;
             cout << "Enter passcode: ";
             cin >> input_passcode;
             
-            
-            bool found = false; // check if user exists
+            // check if user exists
+            bool found = false;
             bool isAdmin = false;
+            int userIndex = -1;  // track which user for failed attempts
             
             for (int i = 0; i < users.size(); i++) {
-                if (users[i].username == input_username && 
-                    users[i].passcode == input_passcode) {
-                    found = true;
-                    
-                    // check if its admin
-                    if (input_username == "admin") {
-                        isAdmin = true;
+                if (users[i].username == input_username) {
+                    userIndex = i;  // found the user
+                    if (users[i].passcode == input_passcode) {
+                        found = true;
+                        users[i].failedAttempts = 0;  // reset on successful login
+                        
+                        // check if its admin
+                        if (input_username == "admin") {
+                            isAdmin = true;
+                        }
+                        break;
                     }
-                    break;
                 }
             }
             
@@ -115,8 +158,20 @@ int main() {
                                     cout << "Username already exists!" << endl;
                                 }
                                 else {
-                                    cout << "Enter passcode for new user: ";
-                                    cin >> newUser.passcode;
+                                    // ask if they want random passcode
+                                    cout << "Generate random passcode? (y/n): ";
+                                    char randomChoice;
+                                    cin >> randomChoice;
+                                    
+                                    if (randomChoice == 'y' || randomChoice == 'Y') {
+                                        newUser.passcode = generateRandomPasscode();
+                                        cout << "Generated passcode: " << newUser.passcode << endl;
+                                    }
+                                    else {
+                                        cout << "Enter passcode for new user: ";
+                                        cin >> newUser.passcode;
+                                    }
+                                    
                                     users.push_back(newUser);
                                     cout << "User added successfully!" << endl;
                                 }
@@ -147,11 +202,15 @@ int main() {
                             // list users
                             cout << "\nAll users:" << endl;
                             for (int i = 0; i < users.size(); i++) {
-                                cout << i+1 << ". " << users[i].username << endl;
+                                cout << i+1 << ". " << users[i].username;
+                                if (users[i].failedAttempts > 0) {
+                                    cout << " (Failed attempts: " << users[i].failedAttempts << ")";
+                                }
+                                cout << endl;
                             }
                         }
                         else if (adminChoice == 5) {
-                            // change user passcode
+                            // change uesr passcode
                             cout << "\nSelect user to change passcode:" << endl;
                             for (int i = 0; i < users.size(); i++) {
                                 cout << i+1 << ". " << users[i].username << endl;
@@ -182,8 +241,21 @@ int main() {
                 }
             }
             else {
-                cout << "GTFO" << endl;
+                cout << "ACCESS DENIED" << endl;
                 User::totalAttempts++;  // increment static counter
+                
+                // if we find the username but wrong password
+                if (userIndex != -1) {
+                    users[userIndex].failedAttempts++;
+                    
+                    // check if penalty applies
+                    if (users[userIndex].failedAttempts > 5) {
+                        double penalty = 0.0;
+                        calculatePenalty(users[userIndex].failedAttempts, penalty);
+                        cout << "Warning: You have " << users[userIndex].failedAttempts << " failed attempts!" << endl;
+                        cout << "Penalty owed: $" << penalty << endl;
+                    }
+                }
             }
         }
     }
