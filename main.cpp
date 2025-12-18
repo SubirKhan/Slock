@@ -3,14 +3,15 @@
 #include <vector>
 #include <cstdlib>  // for rand
 #include <ctime>    // for time
+#include <fstream>  // for file operations
 #include "people.h"
 
 using namespace std;
 
 const int MAX_USERS = 5;  // max users allowed
 
-// function to generate random passcode
-string generateRandomPasscode() {
+
+string generateRandomPasscode() { // function to generate random passcode
     
     char letters[] = {'a','b','c','d','e','f','g','h','i','j','k','l','m', // array of characters to use
                       'n','o','p','q','r','s','t','u','v','w','x','y','z',
@@ -44,6 +45,52 @@ void calculatePenalty(int &attempts, double &penalty) {
     }
 }
 
+// function to save users to file
+void saveUsersToFile(vector<User> &users) {
+    ofstream file;
+    file.open("users.txt");
+    
+    if (file.is_open()) {
+        for (int i = 0; i < users.size(); i++) {
+            file << users[i].username << ",";
+            file << users[i].passcode << ",";
+            file << users[i].failedAttempts << endl;
+        }
+        file.close();
+        cout << "Users saved to file!" << endl;
+    }
+    else {
+        cout << "Error saving file!" << endl;
+    }
+}
+
+
+void loadUsersFromFile(vector<User> &users) { // function to load users from file
+    ifstream file;
+    file.open("users.txt");
+    
+    if (file.is_open()) {
+        string line;
+        while (getline(file, line)) {
+            // parse the line
+            User user;
+            int comma1 = line.find(',');
+            int comma2 = line.find(',', comma1 + 1);
+            
+            user.username = line.substr(0, comma1);
+            user.passcode = line.substr(comma1 + 1, comma2 - comma1 - 1);
+            user.failedAttempts = stoi(line.substr(comma2 + 1));
+            
+            users.push_back(user);
+        }
+        file.close();
+        cout << "Loaded " << users.size() << " users from file!" << endl;
+    }
+    else {
+        cout << "No save file found, starting fresh." << endl;
+    }
+}
+
 int main() {
     
     srand(time(0));  // random number generator
@@ -51,21 +98,26 @@ int main() {
     vector<User> users; // vector that stores users
     
     
-    User admin; // default admin
-    admin.username = "admin"; // making username for admin
-    admin.passcode = "test15"; // making passcode for admin
-    users.push_back(admin);
+    loadUsersFromFile(users); // load users from file if it exists
     
-    
-    User user1; // sample user 1
-    user1.username = "john"; // making username for guest 1
-    user1.passcode = "abc123"; // making passcode for guest 1
-    users.push_back(user1);
-    
-    User user2; // sample user 2
-    user2.username = "jane"; // making username for guest 2
-    user2.passcode = "hello"; // making passcode for guest 2
-    users.push_back(user2);
+        if (users.size() == 0) { // if no users loaded we will create defaults
+
+        User admin; // default admin
+        admin.username = "admin"; // making username for admin
+        admin.passcode = "test19"; // making passcode for admin
+        users.push_back(admin);
+        
+        
+        User user1; // sample user 1
+        user1.username = "john"; // making username for guest 1
+        user1.passcode = "abc123"; // making passcode for guest 1
+        users.push_back(user1);
+        
+        User user2; // sample user 2
+        user2.username = "jane"; // making username for guest 2
+        user2.passcode = "hello"; // making passcode for guest 2
+        users.push_back(user2);
+    }
     
     
     cout << "Welcome to SLock!" << endl; // welcome message
@@ -79,9 +131,17 @@ int main() {
         
         int choice;
         cin >> choice;
+
+        if (cin.fail()) {
+    cin.clear();  // clears the error of invalid entry at log in menu
+    cin.ignore(1000, '\n');  // ignore bad input
+    cout << "Invalid input! Please enter 1 or 2." << endl;
+    continue;  // go back to start of loop
+}
         
         if (choice == 2) {
             running = false;
+            saveUsersToFile(users);  // save before exiting
             cout << "Goodbye!" << endl;
         }
         else if (choice == 1) {
@@ -104,7 +164,7 @@ int main() {
                         found = true;
                         users[i].failedAttempts = 0;  // reset on successful login
                         
-                        // check if its admin
+                        // check if its the admin
                         if (input_username == "admin") {
                             isAdmin = true;
                         }
@@ -162,6 +222,7 @@ int main() {
                                     cout << "Generate random passcode? (y/n): ";
                                     char randomChoice;
                                     cin >> randomChoice;
+                                    cin.ignore(); // prevents terminal from endlessly crashing
                                     
                                     if (randomChoice == 'y' || randomChoice == 'Y') {
                                         newUser.passcode = generateRandomPasscode();
@@ -210,7 +271,7 @@ int main() {
                             }
                         }
                         else if (adminChoice == 5) {
-                            // change uesr passcode
+                            // change user passcode
                             cout << "\nSelect user to change passcode:" << endl;
                             for (int i = 0; i < users.size(); i++) {
                                 cout << i+1 << ". " << users[i].username << endl;
